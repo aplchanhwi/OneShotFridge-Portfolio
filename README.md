@@ -1,4 +1,4 @@
-# FreshKeep Portfolio
+# OneShotFridge Portfolio
 
 FreshKeep는 냉장고 속 식재료를 더 쉽게 관리하기 위한 SwiftUI 기반 iOS 앱입니다.
 사진으로 식재료를 등록하고, 소비기한을 관리하며, 보유한 식재료를 바탕으로 레시피 추천 흐름까지 이어지는 사용 경험을 목표로 만들었습니다.
