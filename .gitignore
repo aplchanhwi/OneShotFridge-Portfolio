@@ -6,7 +6,7 @@ DerivedData/
 *.xcuserstate
 *.xcuserdatad/
 
-# Firebase 설정 파일
+# Firebase 설정 파일 (보안상 매우 중요!)
 GoogleService-Info.plist
 
 # 패키지 매니저
