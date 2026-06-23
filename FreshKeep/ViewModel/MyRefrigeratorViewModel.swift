@@ -9,6 +9,46 @@ import Foundation
 import Combine
 import SwiftData
 
+enum RefrigeratorFilter: CaseIterable, Identifiable {
+    case all
+    case expired
+    case needsAttention
+    case today
+    case fresh
+    
+    var id: Self { self }
+    
+    var title: String {
+        switch self {
+        case .all:
+            return String(localized: "전체")
+        case .expired:
+            return String(localized: "기한 지남")
+        case .needsAttention:
+            return String(localized: "임박")
+        case .today:
+            return String(localized: "오늘")
+        case .fresh:
+            return String(localized: "여유")
+        }
+    }
+    
+    func matches(_ item: FoodItem) -> Bool {
+        switch self {
+        case .all:
+            return true
+        case .expired:
+            return item.expiryState == .expired
+        case .needsAttention:
+            return item.remainingDays > 0 && item.remainingDays <= 3
+        case .today:
+            return item.expiryState == .today
+        case .fresh:
+            return item.expiryState == .fresh
+        }
+    }
+}
+
 /// MyRefrigeratorView의 화면 상태와 저장 액션을 담당하는 ViewModel입니다.
 /// 냉장고 화면은 목록을 보여주는 역할에 집중하고, 식재료 추가/수정 시트 열기/소비 처리 같은 행동은 이곳으로 분리합니다.
 @MainActor
@@ -20,6 +60,10 @@ final class MyRefrigeratorViewModel: ObservableObject {
     /// 수동 추가 시트 표시 여부입니다.
     /// 냉장고 우측 상단의 + 버튼을 누르면 true가 됩니다.
     @Published var isAddViewShown: Bool = false
+    
+    /// 냉장고 목록 상단에서 선택한 소비기한 필터입니다.
+    /// toolbar 메뉴는 추가/레시피 같은 화면 액션을 담당하고, 이 값은 현재 목록을 어떻게 볼지만 결정합니다.
+    @Published var selectedFilter: RefrigeratorFilter = .all
 
     /// 수동 추가 화면을 엽니다.
     /// View에서는 버튼 탭 이벤트만 받고, 실제 상태 변경은 ViewModel이 맡습니다.
@@ -30,6 +74,31 @@ final class MyRefrigeratorViewModel: ObservableObject {
     /// 목록에서 식재료를 탭했을 때 수정 시트를 열기 위한 상태를 설정합니다.
     func showEditView(for item: FoodItem) {
         selectedFoodItem = item
+    }
+    
+    /// 필터 칩을 선택했을 때 현재 목록 조건을 변경합니다.
+    func selectFilter(_ filter: RefrigeratorFilter) {
+        selectedFilter = filter
+    }
+    
+    /// 현재 선택된 필터에 맞는 식재료 목록입니다.
+    func filteredFoods(from foods: [FoodItem]) -> [FoodItem] {
+        foods.filter { selectedFilter.matches($0) }
+    }
+    
+    /// 각 필터 칩에 표시할 식재료 개수입니다.
+    func count(for filter: RefrigeratorFilter, in foods: [FoodItem]) -> Int {
+        foods.filter { filter.matches($0) }.count
+    }
+    
+    /// 상단 요약 배너에 보여줄, 지금 먼저 확인할 식재료 개수입니다.
+    func attentionCount(in foods: [FoodItem]) -> Int {
+        count(for: .needsAttention, in: foods)
+    }
+    
+    /// 요약 카드에 보여줄 상태별 개수입니다.
+    func count(for state: FoodExpiryState, in foods: [FoodItem]) -> Int {
+        foods.filter { $0.expiryState == state }.count
     }
 
     /// 식재료를 "먹었다" 상태로 변경합니다.

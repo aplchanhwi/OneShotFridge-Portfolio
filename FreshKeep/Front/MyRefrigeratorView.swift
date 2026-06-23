@@ -23,63 +23,40 @@ struct MyRefrigeratorView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var navManager: NavigationManager
     
+    private var filteredFoodList: [FoodItem] {
+        viewModel.filteredFoods(from: allFoodList)
+    }
+    
     var body: some View {
-        VStack {
+        Group {
             if allFoodList.isEmpty {// 데이터가 없을 때 보여줄 빈 화면
-                VStack(spacing: 20) {
-                    Image(systemName: "refrigerator")
-                        .font(.system(size: 60))
-                        .foregroundColor(.gray)
-                    Text("냉장고가 텅 비었어요!")
-                        .font(.title2.bold())
-                    Text("새로운 식재료를 추가해 보세요.")
-                        .foregroundColor(.secondary)
-                }
-                .padding()} else {
-                    List(allFoodList) { item in
-                        HStack {
-                            HStack{
-                                VStack(alignment: .leading) {
-                                    Text(item.title) // 우유
-                                        .font(.headline)
-                                    Text(item.expiryStatusText) // 몇일 남았습니다
-                                        .font(.subheadline)
-                                        .foregroundColor(colorForExpiry(item.expiryStatusText))
-                                }
-                                Spacer()
-                            }
-                            .contentShape(.rect)
-                            .onTapGesture {
-                                viewModel.showEditView(for: item)
-                            }
-                            .overlay(alignment: .trailing){
-                                Menu(content: {
-                                    Button("식사 완료") {
-                                        print("eat completed")
-                                        withAnimation {
-                                            viewModel.markAsConsumed(item, context: modelContext)
-                                        }
-                                    }
-                                }){
-                                    Label("", systemImage: "ellipsis")
-                                }.buttonStyle(.plain)
-                            }
-                            .foregroundColor(.white) // 버튼 강조색
-                            .contentShape(Rectangle()) // 버튼 영역 최적화
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button {
-                                    withAnimation {
-                                        viewModel.markAsConsumed(item, context: modelContext)
-                                    }
-                                } label : {
-                                    Image(systemName: "fork.knife")
-                                }
-                                .tint(.green)
+                emptyRefrigeratorView
+            } else {
+                List {
+                    Section {
+                        dashboardView
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                    
+                    Section {
+                        filterChipsView
+                    }
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowBackground(Color.clear)
+                    
+                    Section {
+                        if filteredFoodList.isEmpty {
+                            filteredEmptyView
+                        } else {
+                            ForEach(filteredFoodList) { item in
+                                foodRow(for: item)
                             }
                         }
                     }
-                    .listStyle(.insetGrouped)
                 }
+                .listStyle(.insetGrouped)
+            }
         }
         .navigationTitle(Text("우리 집 식재료"))
         .sheet(
@@ -135,30 +112,190 @@ struct MyRefrigeratorView: View {
         }
     }
     
-    private func colorForExpiry(_ status: String) -> Color {
-        // 1. 가장 먼저 '지남' 상태를 필터링 (가장 시급하니까요!)
-        if status.contains("지났") || status.contains("overdue")  {
-            return .red
+    private var emptyRefrigeratorView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "refrigerator")
+                .font(.system(size: 60))
+                .foregroundColor(.gray)
+            Text("냉장고가 텅 비었어요!")
+                .font(.title2.bold())
+            Text("새로운 식재료를 추가해 보세요.")
+                .foregroundColor(.secondary)
         }
-        
-        // 2. '오늘'인 경우도 숫자가 없으므로 따로 처리
-        if status.contains("오늘") || status.contains("today") {
-            return .orange
-        }
-        
-        // 3. 문자열에서 숫자만 쏙 뽑아내기 (예: "31일 남음" -> "31" -> 정수 31)
-        let numberString = status.filter { $0.isWholeNumber }
-        
-        if let days = Int(numberString) {
-            if days <= 2 {
-                return .orange // 1일, 2일 남았을 때
-            } else {
-                return .secondary // 3일 이상 (31일 포함!) 넉넉할 때
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+    }
+    
+    private var dashboardView: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .foregroundStyle(.orange)
+                    .font(.title3)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("먼저 확인할 식재료 \(viewModel.attentionCount(in: allFoodList))개")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Text("기한이 임박한 항목만 빠르게 모아볼 수 있어요.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+            }
+            
+            HStack(spacing: 10) {
+                summaryCard(
+                    title: String(localized: "기한 지남"),
+                    count: viewModel.count(for: FoodExpiryState.expired, in: allFoodList),
+                    tint: .red
+                )
+                summaryCard(
+                    title: String(localized: "오늘까지"),
+                    count: viewModel.count(for: FoodExpiryState.today, in: allFoodList),
+                    tint: .orange
+                )
+                summaryCard(
+                    title: String(localized: "3일 이내"),
+                    count: viewModel.count(for: FoodExpiryState.urgent, in: allFoodList),
+                    tint: .blue
+                )
             }
         }
+        .padding()
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+    
+    private var filterChipsView: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(RefrigeratorFilter.allCases) { filter in
+                    filterChip(for: filter)
+                }
+            }
+        }
+    }
+    
+    private var filteredEmptyView: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "tray")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+            Text("이 조건에 맞는 식재료가 없어요.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 28)
+    }
+    
+    private func summaryCard(title: String, count: Int, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .allowsTightening(true)
+            Text("\(count)")
+                .font(.title2.bold())
+                .foregroundStyle(tint)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(tint.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+    
+    private func filterChip(for filter: RefrigeratorFilter) -> some View {
+        let isSelected = viewModel.selectedFilter == filter
+        let count = viewModel.count(for: filter, in: allFoodList)
         
-        // 숫자가 아예 없는 예외 상황일 경우 기본색 반환
-        return .secondary
+        return Button {
+            withAnimation(.snappy) {
+                viewModel.selectFilter(filter)
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text(filter.title)
+                    .font(.subheadline.weight(isSelected ? .bold : .medium))
+                Text("\(count)")
+                    .font(.caption.bold())
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(isSelected ? Color.white.opacity(0.22) : Color.gray.opacity(0.18))
+                    .clipShape(Capsule())
+            }
+            .foregroundStyle(isSelected ? .white : .primary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(isSelected ? Color.green : Color(.secondarySystemGroupedBackground))
+            .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(filter.title) \(count)개")
+    }
+    
+    private func foodRow(for item: FoodItem) -> some View {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(colorForExpiryState(item.expiryState).opacity(0.18))
+                .frame(width: 12, height: 12)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.title)
+                    .font(.headline)
+                Text(item.expiryStatusText)
+                    .font(.subheadline)
+                    .foregroundColor(colorForExpiryState(item.expiryState))
+            }
+            
+            Spacer()
+            
+            Menu {
+                Button("식사 완료") {
+                    withAnimation {
+                        viewModel.markAsConsumed(item, context: modelContext)
+                    }
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 32, height: 32)
+            }
+            .buttonStyle(.plain)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            viewModel.showEditView(for: item)
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            Button {
+                withAnimation {
+                    viewModel.markAsConsumed(item, context: modelContext)
+                }
+            } label : {
+                Image(systemName: "fork.knife")
+            }
+            .tint(.green)
+        }
+    }
+    
+    private func colorForExpiryState(_ state: FoodExpiryState) -> Color {
+        switch state {
+        case .expired:
+            return .red
+        case .today:
+            return .orange
+        case .urgent:
+            return .orange
+        case .fresh:
+            return .secondary
+        }
     }
 }
 #Preview {

@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SelectFoodsView Concept C</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f2f2f7;
+      --surface: #ffffff;
+      --text: #1c1c1e;
+      --secondary: #6e6e73;
+      --green: #34c759;
+      --green-soft: #e7f6eb;
+      --orange: #ff9500;
+      --orange-soft: #fff1dc;
+      --red: #ff3b30;
+      --red-soft: #ffe8e6;
+      --blue: #007aff;
+      --line: rgba(60, 60, 67, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #d8d8de;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      color: var(--text);
+    }
+
+    .phone {
+      width: min(100vw, 430px);
+      height: min(100vh, 932px);
+      overflow: hidden;
+      background: var(--page);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav {
+      padding: 18px 18px 12px;
+      background: rgba(242, 242, 247, 0.92);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .top-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .top-line button {
+      border: 0;
+      background: transparent;
+      color: var(--green);
+      font-size: 16px;
+      padding: 4px 0;
+    }
+
+    .top-line .strong {
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 18px 0 0;
+      font-size: 34px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(118, 118, 128, 0.12);
+      color: var(--secondary);
+      font-size: 16px;
+    }
+
+    .content {
+      overflow: auto;
+      padding-bottom: 96px;
+    }
+
+    .selected-panel {
+      margin: 12px 16px 0;
+      padding: 14px 0 14px 14px;
+      border-radius: 12px;
+      background: var(--surface);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-right: 14px;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.25;
+    }
+
+    .panel-head button {
+      border: 0;
+      background: transparent;
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 800;
+      padding: 0;
+      white-space: nowrap;
+    }
+
+    .selected-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 12px 14px 0 0;
+      scrollbar-width: none;
+    }
+
+    .selected-strip::-webkit-scrollbar {
+      display: none;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 8px 10px;
+      background: var(--green);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .pill span {
+      display: grid;
+      place-items: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.24);
+      font-size: 12px;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 2px;
+      margin: 16px 16px 8px;
+      padding: 2px;
+      border-radius: 10px;
+      background: rgba(118, 118, 128, 0.14);
+    }
+
+    .segment {
+      border: 0;
+      min-width: 0;
+      border-radius: 8px;
+      padding: 7px 4px;
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .segment.active {
+      background: var(--surface);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+
+    .hint {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 12px 16px;
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--orange-soft);
+      color: #8b5100;
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 650;
+    }
+
+    .hint-mark {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      background: var(--orange);
+      color: #fff;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .status-legend {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin: 0 16px 12px;
+    }
+
+    .legend-card {
+      min-width: 0;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.15;
+    }
+
+    .legend-card span {
+      display: block;
+      margin-top: 5px;
+      font-size: 18px;
+      font-weight: 850;
+    }
+
+    .legend-card.red {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .legend-card.orange {
+      color: var(--orange);
+      background: var(--orange-soft);
+    }
+
+    .legend-card.green {
+      color: #15803d;
+      background: var(--green-soft);
+    }
+
+    .list {
+      margin: 0 16px 18px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .food {
+      width: 100%;
+      border: 0;
+      background: var(--surface);
+      color: var(--text);
+      display: grid;
+      grid-template-columns: 32px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 13px 14px;
+      text-align: left;
+    }
+
+    .food.expired {
+      background: linear-gradient(90deg, rgba(255, 59, 48, 0.15), #fff 42%);
+      box-shadow: inset 5px 0 0 var(--red);
+    }
+
+    .food.today,
+    .food.urgent {
+      background: linear-gradient(90deg, rgba(255, 149, 0, 0.15), #fff 42%);
+      box-shadow: inset 5px 0 0 var(--orange);
+    }
+
+    .food + .food {
+      border-top: 1px solid var(--line);
+    }
+
+    .mark {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      border: 1.5px solid rgba(142, 142, 147, 0.32);
+      color: transparent;
+      font-weight: 900;
+    }
+
+    .food.selected .mark {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff;
+    }
+
+    .copy {
+      min-width: 0;
+    }
+
+    .copy strong {
+      display: block;
+      font-size: 17px;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .copy span {
+      display: block;
+      margin-top: 4px;
+      font-size: 13px;
+      color: var(--secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .food.expired .copy span {
+      color: var(--red);
+    }
+
+    .food.today .copy span,
+    .food.urgent .copy span {
+      color: var(--orange);
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: rgba(142, 142, 147, 0.14);
+      color: var(--secondary);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .food.expired .badge {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .food.today .badge,
+    .food.urgent .badge {
+      background: var(--orange-soft);
+      color: var(--orange);
+    }
+
+    .bottom {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: min(100vw, 430px);
+      padding: 12px 16px 22px;
+      background: rgba(242, 242, 247, 0.9);
+      backdrop-filter: blur(18px);
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .bottom-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mini-summary {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mini-summary strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .mini-summary span {
+      display: block;
+      margin-top: 2px;
+      color: var(--secondary);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cta {
+      border: 0;
+      border-radius: 12px;
+      min-width: 132px;
+      padding: 13px 16px;
+      background: var(--green);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <header class="nav">
+      <div class="top-line">
+        <button>‹ 냉장고</button>
+        <button class="strong">다음</button>
+      </div>
+      <h1>식재료 고르기</h1>
+      <div class="search">⌕ 식재료 검색</div>
+    </header>
+
+    <main class="content">
+      <section class="selected-panel" aria-label="선택한 식재료">
+        <div class="panel-head">
+          <h2>선택한 식재료 <span id="count-c">3</span>개</h2>
+          <button>비우기</button>
+        </div>
+        <div class="selected-strip">
+          <span class="pill">닭가슴살 <span>×</span></span>
+          <span class="pill">상추 <span>×</span></span>
+          <span class="pill">식빵 <span>×</span></span>
+        </div>
+      </section>
+
+      <div class="segmented" role="tablist" aria-label="필터">
+        <button class="segment active">전체</button>
+        <button class="segment">임박</button>
+        <button class="segment">오늘</button>
+        <button class="segment">여유</button>
+      </div>
+
+      <div class="hint">
+        <span class="hint-mark">!</span>
+        <span>기한이 지났거나 오늘까지인 재료는 상단에 두고, 선택하면 아래 레시피 버튼에 바로 반영돼요.</span>
+      </div>
+
+      <section class="status-legend" aria-label="소비기한 상태 요약">
+        <div class="legend-card red">기한 지남<span>1</span></div>
+        <div class="legend-card orange">임박/오늘<span>4</span></div>
+        <div class="legend-card green">선택됨<span id="count-c-legend">3</span></div>
+      </section>
+
+      <section class="list" aria-label="식재료 목록">
+        <button class="food expired selected">
+          <span class="mark">✓</span>
+          <span class="copy"><strong>닭가슴살</strong><span>1일 지났습니다.</span></span>
+          <span class="badge">기한 지남</span>
+        </button>
+        <button class="food today selected">
+          <span class="mark">✓</span>
+          <span class="copy"><strong>식빵</strong><span>오늘까지예요.</span></span>
+          <span class="badge">오늘</span>
+        </button>
+        <button class="food urgent selected">
+          <span class="mark">✓</span>
+          <span class="copy"><strong>상추</strong><span>2일 남았습니다.</span></span>
+          <span class="badge">임박</span>
+        </button>
+        <button class="food urgent">
+          <span class="mark">✓</span>
+          <span class="copy"><strong>우유</strong><span>1일 남았습니다.</span></span>
+          <span class="badge">임박</span>
+        </button>
+        <button class="food urgent">
+          <span class="mark">✓</span>
+          <span class="copy"><strong>콩나물</strong><span>3일 남았습니다.</span></span>
+          <span class="badge">임박</span>
+        </button>
+        <button class="food">
+          <span class="mark">✓</span>
+          <span class="copy"><strong>계란</strong><span>5일 남았습니다.</span></span>
+          <span class="badge">여유</span>
+        </button>
+        <button class="food">
+          <span class="mark">✓</span>
+          <span class="copy"><strong>삼겹살</strong><span>7일 남았습니다.</span></span>
+          <span class="badge">여유</span>
+        </button>
+        <button class="food">
+          <span class="mark">✓</span>
+          <span class="copy"><strong>냉동 만두</strong><span>90일 남았습니다.</span></span>
+          <span class="badge">여유</span>
+        </button>
+      </section>
+    </main>
+
+    <footer class="bottom">
+      <div class="bottom-row">
+        <div class="mini-summary">
+          <strong><span id="count-c-footer">3</span>개 선택됨</strong>
+          <span>재료를 더 고르면 조건이 더 정확해져요.</span>
+        </div>
+        <button class="cta">레시피 옵션</button>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const countC = document.querySelector("#count-c");
+    const countCFooter = document.querySelector("#count-c-footer");
+    const countCLegend = document.querySelector("#count-c-legend");
+    const refreshC = () => {
+      const count = document.querySelectorAll(".food.selected").length;
+      countC.textContent = count;
+      countCFooter.textContent = count;
+      countCLegend.textContent = count;
+    };
+
+    document.querySelectorAll(".food").forEach((food) => {
+      food.addEventListener("click", () => {
+        food.classList.toggle("selected");
+        refreshC();
+      });
+    });
+  </script>
+</body>
+</html>

@@ -71,6 +71,12 @@ struct GetImageView: View {
             .onChange(of: selectedItem) { _, newValue in
                 guard let newValue else { return }
                 Task {
+                    defer {
+                        Task { @MainActor in
+                            self.selectedItem = nil
+                        }
+                    }
+
                     if let data = try? await newValue.loadTransferable(type: Data.self),
                        let uiImage = UIImage(data: data) {
                         await MainActor.run {

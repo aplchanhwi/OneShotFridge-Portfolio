@@ -86,15 +86,48 @@ final class GeminiResultViewModel: ObservableObject {
     private func requestAnalysis(image: UIImage, modelContext: ModelContext) async {
         hasRequestedAnalysis = true
         state = .loading
+        let requestId = UUID().uuidString
+        let experiment = "image_resize"
+        let clientStart = Date()
         
         do {
-            var analyzedItems = try await geminiService.scanImageResult(image: image)
+            var result = try await geminiService.scanImageAnalysis(
+                image: image,
+                requestId: requestId,
+                experiment: experiment
+            )
+            var analyzedItems = result.items
             applyUserCustomExpiryDays(to: &analyzedItems, modelContext: modelContext)
             items = analyzedItems
             state = .loaded
+            
+            result.metrics.clientTotalMs = Date().timeIntervalSince(clientStart) * 1000
+            result.metrics.itemsCount = analyzedItems.count
+            result.metrics.success = true
+            print(result.metrics.logLine())
         } catch {
             items = []
             state = .failed(message: "분석 중 오류가 발생했습니다.")
+            
+            let failedMetrics = GeminiAnalysisMetrics(
+                requestId: requestId,
+                experiment: experiment,
+                model: nil,
+                imageMaxDimension: 1280,
+                jpegQuality: 0.65,
+                imageBytes: 0,
+                base64Length: 0,
+                clientImageEncodeMs: 0,
+                clientNetworkRoundTripMs: nil,
+                clientTotalMs: Date().timeIntervalSince(clientStart) * 1000,
+                serverTotalMs: nil,
+                geminiMs: nil,
+                serverParsingMs: nil,
+                itemsCount: 0,
+                success: false,
+                retryAttempt: nil
+            )
+            print(failedMetrics.logLine())
         }
     }
     

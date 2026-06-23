@@ -7,11 +7,31 @@
 
 import Foundation
 
+enum FoodExpiryState {
+    case expired
+    case today
+    case urgent
+    case fresh
+}
+
 extension FoodItem {
+    var remainingDays: Int {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let expiryDay = calendar.startOfDay(for: expiryDate)
+        return calendar.dateComponents([.day], from: today, to: expiryDay).day ?? 0
+    }
+    
+    var expiryState: FoodExpiryState {
+        if remainingDays < 0 { return .expired }
+        if remainingDays == 0 { return .today }
+        if remainingDays <= 3 { return .urgent }
+        return .fresh
+    }
+    
     var expiryStatusText: String {
-        let days = Calendar.current.dateComponents([.day], from: Date(), to: expiryDate).day ?? 0
-        if days > 0 { return String(localized: "\(days)일 남았습니다.") }
-        else if days == 0 { return String(localized: "오늘까지 입니다.") }
-        else { return String(localized: "\(abs(days))일 지났습니다.") }
+        if remainingDays > 0 { return String(localized: "\(remainingDays)일 남았습니다.") }
+        else if remainingDays == 0 { return String(localized: "오늘까지예요.") }
+        else { return String(localized: "\(abs(remainingDays))일 지났습니다.") }
     }
 }
