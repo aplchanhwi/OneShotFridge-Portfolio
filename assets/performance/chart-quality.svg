@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="340" viewBox="0 0 760 340" role="img" aria-labelledby="title desc">
+  <title id="title">Detection quality comparison</title>
+  <desc id="desc">Recall changed from 93.2 percent to 84.1 percent. Precision changed from 95.3 percent to 94.9 percent.</desc>
+  <rect width="760" height="340" fill="#ffffff"/>
+  <text x="36" y="42" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">감지 품질 변화</text>
+  <text x="36" y="70" font-family="Arial, sans-serif" font-size="14" fill="#6b7280">정답 식재료 기준 Recall / Precision</text>
+  <line x1="150" y1="275" x2="700" y2="275" stroke="#d1d5db" stroke-width="1"/>
+  <line x1="150" y1="105" x2="150" y2="275" stroke="#d1d5db" stroke-width="1"/>
+  <g>
+    <text x="60" y="153" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#111827">Recall</text>
+    <rect x="150" y="120" width="466" height="28" rx="4" fill="#2563eb"/>
+    <rect x="150" y="160" width="420.5" height="28" rx="4" fill="#10b981"/>
+    <text x="626" y="140" font-family="Arial, sans-serif" font-size="14" fill="#111827">93.2%</text>
+    <text x="581" y="180" font-family="Arial, sans-serif" font-size="14" fill="#111827">84.1%</text>
+  </g>
+  <g>
+    <text x="42" y="243" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#111827">Precision</text>
+    <rect x="150" y="210" width="476.5" height="28" rx="4" fill="#2563eb"/>
+    <rect x="150" y="250" width="474.5" height="28" rx="4" fill="#10b981"/>
+    <text x="637" y="230" font-family="Arial, sans-serif" font-size="14" fill="#111827">95.3%</text>
+    <text x="635" y="270" font-family="Arial, sans-serif" font-size="14" fill="#111827">94.9%</text>
+  </g>
+  <rect x="470" y="36" width="14" height="14" fill="#2563eb"/>
+  <text x="490" y="48" font-family="Arial, sans-serif" font-size="13" fill="#374151">Baseline</text>
+  <rect x="570" y="36" width="14" height="14" fill="#10b981"/>
+  <text x="590" y="48" font-family="Arial, sans-serif" font-size="13" fill="#374151">Image Resize</text>
+</svg>
